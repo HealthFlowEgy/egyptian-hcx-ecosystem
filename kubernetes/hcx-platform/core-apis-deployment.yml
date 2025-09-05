@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hcx-core-apis
+  labels:
+    app: hcx-core-apis
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hcx-core-apis
+  template:
+    metadata:
+      labels:
+        app: hcx-core-apis
+    spec:
+      containers:
+      - name: hcx-core-apis
+        image: healthflowegy/hcx-platform:apis-latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: hcx-platform-config
+        - secretRef:
+            name: hcx-platform-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hcx-core-apis
+spec:
+  selector:
+    app: hcx-core-apis
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+

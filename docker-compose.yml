@@ -1,0 +1,81 @@
+version: '3.8'
+
+# Docker Compose for Local Development - Egyptian HCX Ecosystem
+
+services:
+  # ====================================================================
+  # HCX Platform Services
+  # ====================================================================
+  hcx-api-gateway:
+    image: healthflowegy/hcx-platform:api-gateway-latest
+    ports:
+      - "8080:8080"
+    networks:
+      - hcx-net
+    depends_on:
+      - hcx-core-apis
+
+  hcx-core-apis:
+    image: healthflowegy/hcx-platform:apis-latest
+    networks:
+      - hcx-net
+    depends_on:
+      - postgresql
+      - redis
+      - kafka
+
+  # ====================================================================
+  # Egyptian Healthcare KYC Registry Services
+  # ====================================================================
+  egyptian-kyc-registry:
+    image: healthflowegy/egyptian-kyc-registry:latest
+    ports:
+      - "8081:8081"
+    networks:
+      - hcx-net
+    depends_on:
+      - postgresql
+      - redis
+
+  # ====================================================================
+  # Shared Infrastructure
+  # ====================================================================
+  postgresql:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: hcx_db
+      POSTGRES_USER: hcx_user
+      POSTGRES_PASSWORD: hcx_password
+    ports:
+      - "5432:5432"
+    networks:
+      - hcx-net
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379"
+    networks:
+      - hcx-net
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    networks:
+      - hcx-net
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    networks:
+      - hcx-net
+
+networks:
+  hcx-net:
+    driver: bridge
+
+

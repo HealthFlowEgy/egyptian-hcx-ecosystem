@@ -1,0 +1,35 @@
+version: '3.8'
+
+# Docker Compose for Production - Egyptian HCX Ecosystem
+
+services:
+  hcx-api-gateway:
+    restart: always
+
+  hcx-core-apis:
+    restart: always
+
+  egyptian-kyc-registry:
+    restart: always
+
+  postgresql:
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  kafka:
+    restart: always
+
+  zookeeper:
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:
+
+

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egyptian-kyc-registry
+  labels:
+    app: egyptian-kyc-registry
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: egyptian-kyc-registry
+  template:
+    metadata:
+      labels:
+        app: egyptian-kyc-registry
+    spec:
+      containers:
+      - name: egyptian-kyc-registry
+        image: healthflowegy/egyptian-kyc-registry:latest
+        ports:
+        - containerPort: 8081
+        envFrom:
+        - configMapRef:
+            name: kyc-registry-config
+        - secretRef:
+            name: kyc-registry-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: egyptian-kyc-registry
+spec:
+  selector:
+    app: egyptian-kyc-registry
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP
+
+
