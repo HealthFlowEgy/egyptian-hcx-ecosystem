@@ -7,7 +7,7 @@ services:
   # HCX Platform Services
   # ====================================================================
   hcx-api-gateway:
-    image: healthflowegy/hcx-platform:api-gateway-latest
+    image: ghcr.io/healthflowegy/hcx-platform/api-gateway:latest
     ports:
       - "8090:8090"
     environment:
@@ -19,7 +19,7 @@ services:
       - hcx-net
 
   hcx-apis:
-    image: healthflowegy/hcx-platform:apis-latest
+    image: ghcr.io/healthflowegy/hcx-platform/hcx-apis:latest
     ports:
       - "8080:8080"
     environment:
@@ -43,7 +43,7 @@ services:
   # Egyptian Healthcare KYC Registry Services
   # ====================================================================
   egyptian-hcx-integration:
-    image: healthflowegy/egyptian-kyc-registry:hcx-integration-latest
+    image: ghcr.io/healthflowegy/egyptian-healthcare-kyc-registry/hcx-integration-service:latest
     ports:
       - "8081:8080"
     environment:
@@ -62,7 +62,7 @@ services:
       - hcx-net
 
   egyptian-kyc-service:
-    image: healthflowegy/egyptian-kyc-registry:kyc-service-latest
+    image: ghcr.io/healthflowegy/egyptian-healthcare-kyc-registry/kyc-registry-service:latest
     ports:
       - "8082:8081"
     environment:
