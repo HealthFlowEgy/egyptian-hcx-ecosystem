@@ -9,70 +9,128 @@ services:
   hcx-api-gateway:
     image: healthflowegy/hcx-platform:api-gateway-latest
     ports:
-      - "8080:8080"
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - HCX_APIS_URL=http://hcx-apis:8080
+    depends_on:
+      - hcx-apis
     networks:
       - hcx-net
-    depends_on:
-      - hcx-core-apis
 
-  hcx-core-apis:
+  hcx-apis:
     image: healthflowegy/hcx-platform:apis-latest
-    networks:
-      - hcx-net
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=hcx
+      - DB_USER=hcx_user
+      - DB_PASSWORD=hcx_password
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
-      - postgresql
+      - postgres
       - redis
       - kafka
+    networks:
+      - hcx-net
 
   # ====================================================================
   # Egyptian Healthcare KYC Registry Services
   # ====================================================================
-  egyptian-kyc-registry:
-    image: healthflowegy/egyptian-kyc-registry:latest
+  egyptian-hcx-integration:
+    image: healthflowegy/egyptian-kyc-registry:hcx-integration-latest
     ports:
-      - "8081:8081"
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/kyc_registry
+      - DATABASE_USERNAME=hcx_user
+      - DATABASE_PASSWORD=hcx_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - HCX_GATEWAY_URL=http://hcx-api-gateway:8090
+    depends_on:
+      - postgres
+      - redis
+      - hcx-api-gateway
     networks:
       - hcx-net
+
+  egyptian-kyc-service:
+    image: healthflowegy/egyptian-kyc-registry:kyc-service-latest
+    ports:
+      - "8082:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/kyc_registry
+      - DATABASE_USERNAME=hcx_user
+      - DATABASE_PASSWORD=hcx_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
-      - postgresql
+      - postgres
       - redis
+    networks:
+      - hcx-net
 
   # ====================================================================
   # Shared Infrastructure
   # ====================================================================
-  postgresql:
+  postgres:
     image: postgres:13
     environment:
-      POSTGRES_DB: hcx_db
+      POSTGRES_DB: hcx
       POSTGRES_USER: hcx_user
       POSTGRES_PASSWORD: hcx_password
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - hcx-net
 
   redis:
-    image: redis:6
+    image: redis:6-alpine
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
       - hcx-net
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: wurstmeister/kafka:latest
     ports:
       - "9092:9092"
-    networks:
-      - hcx-net
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: yes
     depends_on:
       - zookeeper
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    ports:
-      - "2181:2181"
     networks:
       - hcx-net
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:2181
+    networks:
+      - hcx-net
+
+volumes:
+  postgres_data:
+  redis_data:
 
 networks:
   hcx-net:
